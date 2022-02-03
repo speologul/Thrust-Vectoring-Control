@@ -1,3 +1,6 @@
+const int Yellow = 2;
+const int Green = 3;
+
 void Launch(){
    digitalWrite(2, HIGH);
    delay(1000);
