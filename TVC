@@ -5,8 +5,7 @@
 #include <SPI.h>
 #include <SD.h>
 
-const int Yellow = 2;
-const int Green = 3;
+
 Servo myServoX;
 Servo myServoY;
 MPU6050 myMPU;
@@ -56,7 +55,7 @@ void setup() {
     time = millis(); //Count in milisecunde
     pinMode(Yellow, OUTPUT); // declare LED pins as output
     pinMode(Green, OUTPUT); // declare LED pins as output
-   // Launch();
+
     myServoX.write (15);
     myServoX.write (180);
     myServoY.write (15);
@@ -79,7 +78,7 @@ void loop(){
     Acc_rawY=Wire.read()<<8|Wire.read();
     Acc_rawZ=Wire.read()<<8|Wire.read();
 
-/*Convertim datele in acceleratie*/
+/*X Euler Equations */
     Acceleration_angleX = atan((Acc_rawY/16384.0)/sqrt(pow((Acc_rawX/16384.0),2) + pow((Acc_rawZ/16384.0),2)))*rad_to_deg;
 /*Y Euler Equations */
     Acceleration_angleY = atan(-1*(Acc_rawX/16384.0)/sqrt(pow((Acc_rawY/16384.0),2) + pow((Acc_rawZ/16384.0),2)))*rad_to_deg;
@@ -107,11 +106,10 @@ void loop(){
     error_x = Total_angleX - desired_angleX;
     error_y = Total_angleY - desired_angleY;
 
-/*Calculam valoarea proportionala*/
     pid_p_x = kp*error_x;
     pid_p_y = kp*error_y;
 
-/*Calculam valoarea integralei*/
+
     if(-100 <error_x <100){
         pid_i_x = pid_i_x+(ki*error_x);
         }
@@ -119,11 +117,10 @@ void loop(){
         pid_i_y = pid_i_y+(ki*error_y);
         }
 
-/*Calculam valoarea derivata*/
     pid_d_x = kd*((error_x - previous_error_x)/elapsedTime);
     pid_d_y = kd*((error_y - previous_error_y)/elapsedTime);
 
-/*PID = suma dintre Proportionala, Integrala si Derivata*/
+/*PID = Sum(P+I+X) */
     PID_x = pid_p_x + pid_i_x + pid_d_x;
     PID_y = pid_p_y + pid_i_y + pid_d_y;
 
@@ -132,7 +129,6 @@ void loop(){
     myServoY.write (ServoStartAngleY - PID_y);
 
 
-/*Salvam eroarea trecuta*/
     previous_error_x = error_x;
     previous_error_y = error_y; 
 
