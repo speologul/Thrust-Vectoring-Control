@@ -1,0 +1,64 @@
+void Launch(){
+   digitalWrite(2, HIGH);
+   delay(1000);
+   digitalWrite(2, LOW); //1
+   delay(500);
+
+
+   digitalWrite(2, HIGH);
+   delay(1000);
+   digitalWrite(2, LOW); //2
+   delay(500);
+   
+
+   digitalWrite(2, HIGH);
+   delay(1000);
+   digitalWrite(2, LOW);  //3
+   delay(500);
+
+   digitalWrite(2, HIGH);
+   delay(1000);
+   digitalWrite(2, LOW); //4
+   delay(500);
+   
+
+   digitalWrite(2, HIGH);
+   delay(1000);
+   digitalWrite(2, LOW); //5
+   delay(500);
+   
+
+   digitalWrite(2, HIGH);
+   delay(1000);
+   digitalWrite(2, LOW); //6
+   delay(500);
+
+
+   digitalWrite(2, HIGH);
+   delay(1000);
+   digitalWrite(2, LOW); //7        
+   delay(500);                      
+
+
+   digitalWrite(2, HIGH);
+   delay(1000);
+   digitalWrite(2, LOW); //8
+   delay(500);
+
+
+   digitalWrite(2, HIGH);
+   delay(1000);
+   digitalWrite(2, LOW); //9
+   delay(500);
+
+
+   digitalWrite(2, HIGH);
+   delay(1000);
+   digitalWrite(2, LOW); //10
+   delay(500);
+
+
+   
+  
+  digitalWrite(3, HIGH);
+  }
