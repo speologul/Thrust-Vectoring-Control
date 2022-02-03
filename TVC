@@ -1,0 +1,139 @@
+#include <Wire.h>
+#include <Servo.h> 
+#include <I2Cdev.h>
+#include <MPU6050.h>
+#include <SPI.h>
+#include <SD.h>
+
+const int Yellow = 2;
+const int Green = 3;
+Servo myServoX;
+Servo myServoY;
+MPU6050 myMPU;
+
+int16_t Acc_rawX, Acc_rawY, Acc_rawZ; //Accel constants
+int16_t Gyr_rawX, Gyr_rawY, Gyr_rawZ; //Gyro constants
+
+float Acceleration_angleX;
+float Acceleration_angleY;
+float Gyro_angleX;
+float Gyro_angleY;
+float Total_angleX;
+float Total_angleY;
+
+float elapsedTime, time, timePrev;
+float rad_to_deg = 180/3.141592654;
+
+float PID_x, PID_y, error_x, error_y, previous_error_x, previous_error_y;
+float pid_p_x=0;
+float pid_p_y=0;
+float pid_i_x=0;
+float pid_i_y=0;
+float pid_d_x=0;
+float pid_d_y=0;
+
+float kp=1.4; //Constanta de proportionalitate 
+float ki=0; //Constanta de integrare 
+float kd=0.1; //Constanta de derivare //0.
+
+float desired_angleX = 180;
+float desired_angleY = 0; // X
+float ServoStartAngleX = 180; 
+float ServoStartAngleY = 0; // X
+
+
+
+void setup() {
+
+    Wire.begin();
+    Wire.beginTransmission(0x68);
+    Wire.write(0x6B);
+    Wire.write(0);
+    Wire.endTransmission(true);
+    Serial.begin(9600);
+    myServoX.attach(9); //ServoX pe pin-ul 9
+    myServoY.attach (8); //ServoY pe pin-ul 8
+    time = millis(); //Count in milisecunde
+    pinMode(Yellow, OUTPUT); // declare LED pins as output
+    pinMode(Green, OUTPUT); // declare LED pins as output
+   // Launch();
+    myServoX.write (15);
+    myServoX.write (180);
+    myServoY.write (15);
+    myServoY.write (0);
+    
+
+}
+
+
+void loop(){
+    timePrev = time; // Stocam timpul
+    time = millis(); // actual time
+    elapsedTime = (time - timePrev) / 1000;
+    Wire.beginTransmission(0x68);
+    Wire.write(0x3B); 
+    Wire.endTransmission(false);
+    Wire.requestFrom(0x68,6,true); // Apelam registrii Arduino
+
+    Acc_rawX=Wire.read()<<8|Wire.read(); //Convertim int-ul in in sir de 8 biti
+    Acc_rawY=Wire.read()<<8|Wire.read();
+    Acc_rawZ=Wire.read()<<8|Wire.read();
+
+/*Convertim datele in acceleratie*/
+    Acceleration_angleX = atan((Acc_rawY/16384.0)/sqrt(pow((Acc_rawX/16384.0),2) + pow((Acc_rawZ/16384.0),2)))*rad_to_deg;
+/*Y Euler Equations */
+    Acceleration_angleY = atan(-1*(Acc_rawX/16384.0)/sqrt(pow((Acc_rawY/16384.0),2) + pow((Acc_rawZ/16384.0),2)))*rad_to_deg;
+
+    Wire.beginTransmission(0x68);
+    Wire.write(0x43);
+    Wire.endTransmission(false);
+    Wire.requestFrom(0x68,4,true);
+
+    Gyr_rawX=Wire.read()<<8|Wire.read();
+    Gyr_rawY=Wire.read()<<8|Wire.read();
+
+/*X Gyro Angle*/
+    Gyro_angleX = Gyr_rawX/131.0;
+/*Y Gyro Angle*/
+    Gyro_angleY = Gyr_rawY/131.0;
+
+
+/*—X Axis Angle—*/
+    Total_angleX = 0.98*(Total_angleX + Gyro_angleX*elapsedTime) + 0.02*Acceleration_angleX;
+/*—Y Axis Angle—*/
+    Total_angleY = 0.98*(Total_angleY + Gyro_angleY*elapsedTime) + 0.02*Acceleration_angleY;
+
+/*Calculam eroarea pe X si pe Y intre unghiul dorit si unghiul unde ne aflam*/
+    error_x = Total_angleX - desired_angleX;
+    error_y = Total_angleY - desired_angleY;
+
+/*Calculam valoarea proportionala*/
+    pid_p_x = kp*error_x;
+    pid_p_y = kp*error_y;
+
+/*Calculam valoarea integralei*/
+    if(-100 <error_x <100){
+        pid_i_x = pid_i_x+(ki*error_x);
+        }
+    if(-100 <error_y <100){
+        pid_i_y = pid_i_y+(ki*error_y);
+        }
+
+/*Calculam valoarea derivata*/
+    pid_d_x = kd*((error_x - previous_error_x)/elapsedTime);
+    pid_d_y = kd*((error_y - previous_error_y)/elapsedTime);
+
+/*PID = suma dintre Proportionala, Integrala si Derivata*/
+    PID_x = pid_p_x + pid_i_x + pid_d_x;
+    PID_y = pid_p_y + pid_i_y + pid_d_y;
+
+
+    myServoX.write (ServoStartAngleX - PID_x);
+    myServoY.write (ServoStartAngleY - PID_y);
+
+
+/*Salvam eroarea trecuta*/
+    previous_error_x = error_x;
+    previous_error_y = error_y; 
+
+}
